@@ -1,50 +1,83 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SC220504544 - Balance DApp</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 40px;
+    }
+    input {
+      padding: 5px;
+      margin: 5px;
+    }
+    button {
+      padding: 6px 12px;
+      margin: 5px;
+      cursor: pointer;
+    }
+  </style>
 </head>
-<body style="font-family: Arial; text-align: center; margin-top: 40px;">
+<body>
   <h2>💰 Smart Contract: SC220504544</h2>
   <p>Interact with your Sepolia-deployed contract</p>
 
+  <!-- Connect Wallet -->
   <div>
-    <button onclick="connectWallet()">🔗 Connect MetaMask</button>
+    <button id="connectBtn" onclick="connectWallet()">🔗 Connect MetaMask</button>
     <p id="wallet">Not connected</p>
   </div>
 
   <hr style="margin: 20px 0;">
 
+  <!-- Increase -->
   <h3>Increase Balance</h3>
   <input id="incValue" type="number" placeholder="Enter amount" />
   <button onclick="increase()">Increase</button>
 
+  <!-- Decrease -->
   <h3>Decrease Balance</h3>
   <input id="decValue" type="number" placeholder="Enter amount" />
   <button onclick="decrease()">Decrease</button>
 
+  <!-- Read -->
   <h3>Check Balance</h3>
   <button onclick="getBalance()">Read Balance</button>
   <p id="balance">Balance: -</p>
 
-  <!-- 1️⃣ Load ethers.js FIRST -->
+  <!-- 1️⃣ Load ethers.js -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 
-  <!-- 2️⃣ Then your app code -->
+  <!-- 2️⃣ Your app script -->
   <script>
-    // ✅ Your deployed contract details
+    // ✅ Your deployed contract
     const contractAddress = "0x5A86858aA3b595FD6663c2296741eF4cd8BC4d01";
     const contractABI = [
       {
-        "inputs": [{"internalType": "uint256","name": "amount","type": "uint256"}],
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
+          }
+        ],
         "name": "decrease",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
       },
       {
-        "inputs": [{"internalType": "uint256","name": "amount","type": "uint256"}],
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
+          }
+        ],
         "name": "increase",
         "outputs": [],
         "stateMutability": "nonpayable",
@@ -58,7 +91,13 @@
       {
         "inputs": [],
         "name": "getBalance",
-        "outputs": [{"internalType": "uint256","name": "","type": "uint256"}],
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
         "stateMutability": "view",
         "type": "function"
       }
@@ -69,30 +108,54 @@
     let contract;
 
     async function connectWallet() {
-      if (window.ethereum) {
-        try {
-          await window.ethereum.request({ method: 'eth_requestAccounts' });
-          provider = new ethers.providers.Web3Provider(window.ethereum);
-          signer = provider.getSigner();
-          contract = new ethers.Contract(contractAddress, contractABI, signer);
-          const address = await signer.getAddress();
-          document.getElementById("wallet").innerText = "Connected: " + address;
-        } catch (error) {
-          console.error(error);
-          alert("Connection failed.");
-        }
-      } else {
+      const connectBtn = document.getElementById("connectBtn");
+
+      if (!window.ethereum) {
         alert("Please install MetaMask to use this DApp.");
+        return;
+      }
+
+      try {
+        // Request account access (MetaMask popup first time)
+        await window.ethereum.request({ method: "eth_requestAccounts" });
+
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        signer = provider.getSigner();
+        contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+        const address = await signer.getAddress();
+        document.getElementById("wallet").innerText = "Connected: " + address;
+
+        // Optional: warn if not on Sepolia
+        const network = await provider.getNetwork();
+        if (network.chainId !== 11155111) {
+          alert("Warning: You are not on Sepolia. Please switch network in MetaMask.");
+        }
+
+        // Update button UI
+        connectBtn.innerText = "✅ Connected";
+        connectBtn.disabled = true;
+      } catch (error) {
+        console.error(error);
+        alert("Connection failed: " + (error.message || error));
       }
     }
 
     async function increase() {
       const amount = document.getElementById("incValue").value;
-      if (!amount) return alert("Enter an amount!");
+      if (!amount) {
+        alert("Enter an amount!");
+        return;
+      }
+      if (!contract) {
+        alert("Please connect MetaMask first.");
+        return;
+      }
+
       try {
         const tx = await contract.increase(amount);
         await tx.wait();
-        alert("✅ Balance increased by " + amount);
+        alert("Balance increased by " + amount);
       } catch (err) {
         console.error(err);
         alert("Transaction failed: " + (err.message || err));
@@ -101,11 +164,19 @@
 
     async function decrease() {
       const amount = document.getElementById("decValue").value;
-      if (!amount) return alert("Enter an amount!");
+      if (!amount) {
+        alert("Enter an amount!");
+        return;
+      }
+      if (!contract) {
+        alert("Please connect MetaMask first.");
+        return;
+      }
+
       try {
         const tx = await contract.decrease(amount);
         await tx.wait();
-        alert("✅ Balance decreased by " + amount);
+        alert("Balance decreased by " + amount);
       } catch (err) {
         console.error(err);
         alert("Transaction failed: " + (err.message || err));
@@ -113,9 +184,15 @@
     }
 
     async function getBalance() {
+      if (!contract) {
+        alert("Please connect MetaMask first.");
+        return;
+      }
+
       try {
         const result = await contract.getBalance();
-        document.getElementById("balance").innerText = "Balance: " + result.toString();
+        document.getElementById("balance").innerText =
+          "Balance: " + result.toString();
       } catch (err) {
         console.error(err);
         alert("Error reading balance: " + (err.message || err));
@@ -124,3 +201,5 @@
   </script>
 </body>
 </html>
+
+  
