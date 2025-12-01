@@ -7,7 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 <style>
     body { font-family: Arial; text-align: center; margin-top: 40px; }
-    input { padding: 8px; margin: 5px; width: 200px; }
+    input { padding: 8px; margin: 5px; width: 220px; }
     button { padding: 10px 18px; margin: 5px; cursor: pointer; }
 </style>
 </head>
@@ -23,23 +23,23 @@
 <hr>
 
 <h3>Deposit ETH</h3>
-<input id="depositAmount" type="number" placeholder="Amount in ETH">
+<input id="depositAmount" type="number" step="0.0001" placeholder="Amount in ETH">
 <button onclick="deposit()">Deposit</button>
 
 <h3>Withdraw</h3>
-<input id="withdrawAmount" type="number" placeholder="Amount in ETH">
+<input id="withdrawAmount" type="number" step="0.0001" placeholder="Amount in ETH">
 <button onclick="withdraw()">Withdraw</button>
 
-<h3>My Balance</h3>
+<h3>My Balance (myBalance)</h3>
 <button onclick="myBalance()">Show My Balance</button>
 <p id="myBal">-</p>
 
-<h3>Check Any User Balance</h3>
+<h3>Check Any User Balance (balanceOf)</h3>
 <input id="userAddress" placeholder="Wallet address">
 <button onclick="balanceOf()">Check Balance</button>
 <p id="userBal">-</p>
 
-<h3>Contract Balance</h3>
+<h3>Contract Balance (contractBalance)</h3>
 <button onclick="contractBalance()">Show Contract Balance</button>
 <p id="contractBal">-</p>
 
@@ -119,22 +119,20 @@ let provider, signer, contract;
 // -------------------- CONNECT METAMASK --------------------
 async function connectWallet() {
     if (!window.ethereum) return alert("Install MetaMask!");
-
     try {
         await ethereum.request({ method: "eth_requestAccounts" });
-
         provider = new ethers.providers.Web3Provider(window.ethereum);
         signer = provider.getSigner();
         contract = new ethers.Contract(contractAddress, contractABI, signer);
 
         const address = await signer.getAddress();
         document.getElementById("wallet").innerText = "Connected: " + address;
-
-        document.getElementById("connectBtn").innerText = "✅ Connected";
-        document.getElementById("connectBtn").disabled = true;
-
+        const btn = document.getElementById("connectBtn");
+        btn.innerText = "✅ Connected";
+        btn.disabled = true;
     } catch (err) {
-        alert("Connection failed: " + err.message);
+        console.error(err);
+        alert("Connection failed: " + (err.message || err));
     }
 }
 
@@ -148,7 +146,8 @@ async function deposit() {
         await tx.wait();
         alert("Deposited " + eth + " ETH");
     } catch (err) {
-        alert("Deposit failed: " + err.message);
+        console.error(err);
+        alert("Deposit failed: " + (err.message || err));
     }
 }
 
@@ -162,7 +161,8 @@ async function withdraw() {
         await tx.wait();
         alert("Withdrawn " + eth + " ETH");
     } catch (err) {
-        alert("Withdraw failed: " + err.message);
+        console.error(err);
+        alert("Withdraw failed: " + (err.message || err));
     }
 }
 
@@ -172,7 +172,8 @@ async function myBalance() {
         document.getElementById("myBal").innerText =
             ethers.utils.formatEther(bal) + " ETH";
     } catch (err) {
-        alert("Error: " + err.message);
+        console.error(err);
+        alert("Error: " + (err.message || err));
     }
 }
 
@@ -185,7 +186,8 @@ async function balanceOf() {
         document.getElementById("userBal").innerText =
             ethers.utils.formatEther(bal) + " ETH";
     } catch (err) {
-        alert("Error: " + err.message);
+        console.error(err);
+        alert("Error: " + (err.message || err));
     }
 }
 
@@ -195,7 +197,8 @@ async function contractBalance() {
         document.getElementById("contractBal").innerText =
             ethers.utils.formatEther(bal) + " ETH";
     } catch (err) {
-        alert("Error: " + err.message);
+        console.error(err);
+        alert("Error: " + (err.message || err));
     }
 }
 </script>
