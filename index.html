@@ -4,16 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SC220504544 - Balance DApp</title>
-
-  <!-- ✅ Official ethers v5 UMD build (global: window.ethers) -->
-  <script
-    src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"
-    type="application/javascript">
-  </script>
 </head>
-
 <body style="font-family: Arial; text-align: center; margin-top: 40px;">
-
   <h2>💰 Smart Contract: SC220504544</h2>
   <p>Interact with your Sepolia-deployed contract</p>
 
@@ -24,60 +16,111 @@
 
   <hr style="margin: 20px 0;">
 
-  <h3>Increase Balance (Deposit)</h3>
-  <input id="incValue" type="number" placeholder="Enter amount in ETH" />
+  <h3>Increase Balance</h3>
+  <input id="incValue" type="number" placeholder="Enter amount" />
   <button onclick="increase()">Increase</button>
 
-  <h3>Decrease Balance (Withdraw)</h3>
-  <input id="decValue" type="number" placeholder="Enter amount in ETH" />
+  <h3>Decrease Balance</h3>
+  <input id="decValue" type="number" placeholder="Enter amount" />
   <button onclick="decrease()">Decrease</button>
 
   <h3>Check Balance</h3>
   <button onclick="getBalance()">Read Balance</button>
   <p id="balance">Balance: -</p>
 
-  <script>
-    const contractAddress = "0x8D383091126C1C60e474F324EddFb67bF248c990";
+  <!-- 1️⃣ Load ethers.js FIRST -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 
+  <!-- 2️⃣ Then your app code -->
+  <script>
+    // ✅ Your deployed contract details
+    const contractAddress = "0x5A86858aA3b595FD6663c2296741eF4cd8BC4d01";
     const contractABI = [
       {
-        "inputs": [],
-        "name": "deposit",
-        "outputs": [],
-        "stateMutability": "payable",
-        "type": "function"
-      },
-      {
-        "anonymous": false,
-        "inputs": [
-          { "indexed": true, "internalType": "address", "name": "user", "type": "address" },
-          { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }
-        ],
-        "name": "Deposited",
-        "type": "event"
-      },
-      {
-        "inputs": [{ "internalType": "uint256", "name": "amount", "type": "uint256" }],
-        "name": "withdraw",
+        "inputs": [{"internalType": "uint256","name": "amount","type": "uint256"}],
+        "name": "decrease",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
       },
       {
-        "anonymous": false,
-        "inputs": [
-          { "indexed": true, "internalType": "address", "name": "user", "type": "address" },
-          { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }
-        ],
-        "name": "Withdrawn",
-        "type": "event"
-      },
-      {
-        "inputs": [{ "internalType": "address", "name": "user", "type": "address" }],
-        "name": "balanceOf",
-        "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-        "stateMutability": "view",
+        "inputs": [{"internalType": "uint256","name": "amount","type": "uint256"}],
+        "name": "increase",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
       },
       {
+        "inputs": [],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {
+        "inputs": [],
+        "name": "getBalance",
+        "outputs": [{"internalType": "uint256","name": "","type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    ];
 
+    let provider;
+    let signer;
+    let contract;
+
+    async function connectWallet() {
+      if (window.ethereum) {
+        try {
+          await window.ethereum.request({ method: 'eth_requestAccounts' });
+          provider = new ethers.providers.Web3Provider(window.ethereum);
+          signer = provider.getSigner();
+          contract = new ethers.Contract(contractAddress, contractABI, signer);
+          const address = await signer.getAddress();
+          document.getElementById("wallet").innerText = "Connected: " + address;
+        } catch (error) {
+          console.error(error);
+          alert("Connection failed.");
+        }
+      } else {
+        alert("Please install MetaMask to use this DApp.");
+      }
+    }
+
+    async function increase() {
+      const amount = document.getElementById("incValue").value;
+      if (!amount) return alert("Enter an amount!");
+      try {
+        const tx = await contract.increase(amount);
+        await tx.wait();
+        alert("✅ Balance increased by " + amount);
+      } catch (err) {
+        console.error(err);
+        alert("Transaction failed: " + (err.message || err));
+      }
+    }
+
+    async function decrease() {
+      const amount = document.getElementById("decValue").value;
+      if (!amount) return alert("Enter an amount!");
+      try {
+        const tx = await contract.decrease(amount);
+        await tx.wait();
+        alert("✅ Balance decreased by " + amount);
+      } catch (err) {
+        console.error(err);
+        alert("Transaction failed: " + (err.message || err));
+      }
+    }
+
+    async function getBalance() {
+      try {
+        const result = await contract.getBalance();
+        document.getElementById("balance").innerText = "Balance: " + result.toString();
+      } catch (err) {
+        console.error(err);
+        alert("Error reading balance: " + (err.message || err));
+      }
+    }
+  </script>
+</body>
+</html>
