@@ -4,7 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SC220504544 - Balance DApp</title>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+
+  <!-- ✅ Official ethers v5 UMD build (global: window.ethers) -->
+  <script
+    src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"
+    type="application/javascript">
+  </script>
 </head>
 
 <body style="font-family: Arial; text-align: center; margin-top: 40px;">
@@ -32,10 +37,6 @@
   <p id="balance">Balance: -</p>
 
   <script>
-    // ============================================
-    //   🔥 Your REAL Contract
-    // ============================================
-
     const contractAddress = "0x8D383091126C1C60e474F324EddFb67bF248c990";
 
     const contractABI = [
@@ -79,88 +80,4 @@
         "type": "function"
       },
       {
-        "inputs": [],
-        "name": "contractBalance",
-        "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "myBalance",
-        "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-        "stateMutability": "view",
-        "type": "function"
-      }
-    ];
 
-    // ============================================
-    //   WALLET + CONTRACT SETUP
-    // ============================================
-
-    let provider, signer, contract;
-
-    async function connectWallet() {
-      if (!window.ethereum) return alert("Install MetaMask!");
-
-      try {
-        await ethereum.request({ method: "eth_requestAccounts" });
-
-        provider = new ethers.providers.Web3Provider(window.ethereum);
-        signer = provider.getSigner();
-        contract = new ethers.Contract(contractAddress, contractABI, signer);
-
-        const userAddress = await signer.getAddress();
-        document.getElementById("wallet").innerText = "Connected: " + userAddress;
-
-      } catch (err) {
-        alert("Connection failed: " + err.message);
-      }
-    }
-
-    // ============================================
-    //   FUNCTIONS TO INTERACT WITH CONTRACT
-    // ============================================
-
-    // Deposit (increase balance)
-    async function increase() {
-      const val = document.getElementById("incValue").value;
-      if (!val) return alert("Enter amount!");
-
-      try {
-        const tx = await contract.deposit({ value: ethers.utils.parseEther(val) });
-        await tx.wait();
-        alert("Deposited " + val + " ETH");
-      } catch (err) {
-        alert("Transaction failed: " + err.message);
-      }
-    }
-
-    // Withdraw (decrease balance)
-    async function decrease() {
-      const val = document.getElementById("decValue").value;
-      if (!val) return alert("Enter amount!");
-
-      try {
-        const tx = await contract.withdraw(ethers.utils.parseEther(val));
-        await tx.wait();
-        alert("Withdrawn " + val + " ETH");
-      } catch (err) {
-        alert("Transaction failed: " + err.message);
-      }
-    }
-
-    // Read your balance
-    async function getBalance() {
-      try {
-        const balance = await contract.myBalance();
-        document.getElementById("balance").innerText = "Balance: " + ethers.utils.formatEther(balance) + " ETH";
-      } catch (err) {
-        alert("Error reading balance: " + err.message);
-      }
-    }
-
-  </script>
-
-</body>
-</html>
